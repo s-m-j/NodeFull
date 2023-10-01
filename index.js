@@ -11,7 +11,7 @@ import checkAuth from './utils/checkAuth.js';
 import * as UserController from './controllers/UserController'
 
 mongoose
-    .connect('mongodb+srv://sm_user:6RzAKsUhfjAPYghU@cluster0.rrmry.mongodb.net/blog?retryWrites=true&w=majority')
+    .connect('')
     .then(() => console.log('DB Ok'))
     .catch((err) => console.log('DB error', err));
 
