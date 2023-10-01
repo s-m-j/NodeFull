@@ -1,17 +1,15 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
-import bcrypt from 'bcrypt';
+import config from 'dotenv';
 import mongoose from 'mongoose';
-import { validationResult } from 'express-validator';
 
 import { registerValidation } from './validations/auth.js'; 
-import UserModel from './models/User.js';
 import checkAuth from './utils/checkAuth.js';
 
 import * as UserController from './controllers/UserController'
 
 mongoose
-    .connect('mongodb+srv://sm_user:6RzAKsUhfjAPYghU@cluster0.rrmry.mongodb.net/blog?retryWrites=true&w=majority')
+    .connect(processes.env.DB_CONN)
     .then(() => console.log('DB Ok'))
     .catch((err) => console.log('DB error', err));
 
@@ -29,22 +27,8 @@ app.get('/auth/me', checkAuth, UserController.getMe);
 
 app.post('/auth/register', registerValidation, UserController.newuser)
 
-app.post('/auth/xxx', (req, res) => {
 
-    const token = jwt.sign(
-        {
-            email: req.body.email,
-            username: 'Serega',
-        },
-        'topsecret123',
-    );
-    res.json({
-        success: true,
-        token
-    })
-})
-
-app.listen(4444, (err) => {
+app.listen(processes.env.PORT, (err) => {
     if (err) {
         return console.log(err);
     }
