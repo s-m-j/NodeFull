@@ -3,10 +3,12 @@ import jwt from "jsonwebtoken";
 // так неправильно import config from "dotenv";
 import "dotenv/config";
 import mongoose from "mongoose";
+import multer from "multer";
 
-import { registerValidation } from "./validations/auth.js";
+import { registerValidation, loginValidation } from "./validations/auth.js";
 import { postCreateValidation } from "./validations/post.js";
 import checkAuth from "./utils/checkAuth.js";
+import handleValidationErrors from "./utils/handleValidationErrors.js";
 
 import * as UserController from "./controllers/UserController.js";
 import * as PostController from "./controllers/PostController.js";
@@ -18,23 +20,49 @@ mongoose
 
 const app = express();
 
+const storage = multer.diskStorage({
+  destination: (_, __, cb) => {
+    cb(null, "uploads");
+  },
+  filename: (_, file, cb) => {
+    cb(null, file.originalName);
+  },
+});
+
+const upload = multer({ storage });
+
 app.use(express.json());
+app.use("/uploads", express.static("uploads"));
 
 app.get("/", (req, res) => {
   res.send("Hello Me");
 });
 
-app.post("/auth/login", UserController.login);
-
+app.post(
+  "/auth/login",
+  loginValidation,
+  handleValidationErrors,
+  UserController.login
+);
+app.post(
+  "/auth/register",
+  registerValidation,
+  handleValidationErrors,
+  UserController.newuser
+);
 app.get("/auth/me", checkAuth, UserController.getMe);
 
-app.post("/auth/register", registerValidation, UserController.newuser);
+app.post("/upload", checkAuth, upload.single("image"), (req, res) => {
+  res.json({
+    url: `/uploads/${req.file.originalname}`,
+  });
+});
 
-// app.get("/posts", PostController.getAll);
-// app.get("/posts/:id", checkAuth, PostController.getOne);
+app.get("/posts", PostController.getAll);
+app.get("/posts/:id", checkAuth, PostController.getOne);
 app.post("/posts", checkAuth, postCreateValidation, PostController.create);
-// app.delete("/posts", checkAuth, UserController.remove);
-// app.patch("/posts", checkAuth, UserController.update);
+app.delete("/posts/:id", checkAuth, PostController.remove);
+app.patch("/posts/:id", checkAuth, PostController.update);
 
 app.listen(process.env.PORT, (err) => {
   if (err) {
